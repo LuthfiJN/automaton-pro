@@ -1,8 +1,18 @@
 import { useState } from 'react';
-import { Link as LinkIcon, FileText, Globe } from 'lucide-react';
+import { Link as LinkIcon, FileText, Globe, Copy, Check, User } from 'lucide-react';
 
 export default function TabLink({ hasil, isLoading, error, eksekusi }) {
   const [query, setQuery] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    const teks = hasil?.jurnal?.[0]?.ringkasan || hasil?.kesimpulan_gabungan;
+    if (teks) {
+      navigator.clipboard.writeText(teks);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
@@ -42,11 +52,28 @@ export default function TabLink({ hasil, isLoading, error, eksekusi }) {
           <div className="inline-flex items-center gap-1.5 bg-[#e8f2f4] text-[#00505e] px-3 py-1.5 rounded-md text-[12px] font-bold mb-6">
             <Globe size={14} /> Sumber Eksternal
           </div>
-          <h3 className="text-[24px] font-bold text-[#00505e] mb-6 leading-tight">
+          <h3 className="text-[24px] font-bold text-[#00505e] mb-2 leading-tight">
             {hasil.jurnal?.[0]?.judul || 'Hasil Analisis Link'}
           </h3>
+          
+          {hasil.jurnal?.[0]?.penulis && (
+            <p className="text-[14px] font-semibold text-[#9b4500] mb-6 flex items-center gap-1.5">
+              <User size={14} />
+              {hasil.jurnal[0].penulis}
+            </p>
+          )}
+
           <div className="text-[16px] text-[#3f484b] leading-relaxed whitespace-pre-wrap text-justify">
             {hasil.jurnal?.[0]?.ringkasan || hasil.kesimpulan_gabungan}
+          </div>
+
+          <div className="mt-8 flex justify-end border-t border-[#bfc8cb]/50 pt-6">
+            <button 
+              onClick={handleCopy}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold text-[#00505e] hover:bg-[#e6eff9] transition-colors border border-[#00505e]/20"
+            >
+              {isCopied ? <><Check size={16} className="text-[#00505e]"/> Tersalin</> : <><Copy size={16} /> Salin Rangkuman</>}
+            </button>
           </div>
         </div>
       )}
