@@ -1,8 +1,41 @@
-import { useState } from 'react';
-import { Search, Bookmark, CheckCircle, ArrowRight, Sparkles, Copy, Share2, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Bookmark, CheckCircle, ArrowRight, Sparkles, Copy, Check, FileText, User } from 'lucide-react';
 
 export default function TabRiset({ hasil, isLoading, error, eksekusi }) {
   const [query, setQuery] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [savedJournals, setSavedJournals] = useState({});
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('automaton_bookmarks')) || [];
+    const initialSaved = {};
+    saved.forEach(item => {
+      initialSaved[item.judul] = true;
+    });
+    setSavedJournals(initialSaved);
+  }, [hasil]);
+
+  const handleCopy = () => {
+    if (hasil?.kesimpulan_gabungan) {
+      navigator.clipboard.writeText(hasil.kesimpulan_gabungan);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const toggleBookmark = (item) => {
+    let savedList = JSON.parse(localStorage.getItem('automaton_bookmarks')) || [];
+    const isSaved = savedJournals[item.judul];
+    
+    if (isSaved) {
+      savedList = savedList.filter(savedItem => savedItem.judul !== item.judul);
+    } else {
+      savedList.push(item);
+    }
+    
+    localStorage.setItem('automaton_bookmarks', JSON.stringify(savedList));
+    setSavedJournals(prev => ({ ...prev, [item.judul]: !isSaved }));
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -11,7 +44,7 @@ export default function TabRiset({ hasil, isLoading, error, eksekusi }) {
           Eksplorasi Jurnal Cerdas
         </h1>
         <p className="text-[18px] text-[#3f484b]">
-          Masukkan topik penelitian untuk menemukan dan merangkum jurnal terkait secara otomatis.
+          Masukkan topik penelitian untuk menemukan dan merangkum jurnal maksimal 5 tahun terakhir.
         </p>
       </div>
 
@@ -54,10 +87,23 @@ export default function TabRiset({ hasil, isLoading, error, eksekusi }) {
                   <span className="bg-[#fc7c23]/10 text-[#9b4500] px-2.5 py-1 rounded-md text-[12px] font-bold">
                     {item.tahun}
                   </span>
-                  <Bookmark size={18} className="text-[#bfc8cb] hover:text-[#00505e] cursor-pointer" />
+                  <button onClick={() => toggleBookmark(item)}>
+                    <Bookmark 
+                      size={18} 
+                      className={`cursor-pointer transition-colors ${savedJournals[item.judul] ? 'fill-[#9b4500] text-[#9b4500]' : 'text-[#bfc8cb] hover:text-[#00505e]'}`} 
+                    />
+                  </button>
                 </div>
-                <h3 className="text-[18px] font-bold text-[#00505e] mb-3 leading-snug">{item.judul}</h3>
+                
+                <h3 className="text-[18px] font-bold text-[#00505e] mb-1 leading-snug">{item.judul}</h3>
+                
+                <p className="text-[14px] font-semibold text-[#9b4500] mb-3 flex items-center gap-1.5">
+                  <User size={14} />
+                  {item.penulis || 'Penulis tidak diketahui'}
+                </p>
+
                 <p className="text-[14px] text-[#3f484b] mb-6 flex-grow leading-relaxed">{item.ringkasan}</p>
+                
                 <hr className="border-[#bfc8cb]/50 mb-4" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#16697a]">
@@ -86,11 +132,11 @@ export default function TabRiset({ hasil, isLoading, error, eksekusi }) {
               {hasil.kesimpulan_gabungan}
             </div>
             <div className="flex gap-4">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold text-[#00505e] hover:bg-[#e6eff9] transition-colors border border-[#00505e]/20">
-                <Copy size={16} /> Salin Teks
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold text-[#00505e] hover:bg-[#e6eff9] transition-colors border border-[#00505e]/20">
-                <Share2 size={16} /> Bagikan
+              <button 
+                onClick={handleCopy}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[14px] font-semibold text-[#00505e] hover:bg-[#e6eff9] transition-colors border border-[#00505e]/20"
+              >
+                {isCopied ? <><Check size={16} className="text-[#00505e]"/> Berhasil Disalin</> : <><Copy size={16} /> Salin Teks</>}
               </button>
             </div>
           </div>
